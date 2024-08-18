@@ -1,0 +1,31 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+
+- script: |
+    echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+    echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin:$(PATH)"
+  displayName: "Set java version to 11" 
+  
+- script: mvn initialize --file Engine/pom.xml
+  displayName: 'Maven Initialize'
+
+- script: mvn install --file Engine/pom.xml
+  displayName: 'Maven Install'
+
+- script: chmod -R 755 ./
+  displayName: 'Set Permissions'
+
+- script: ./Run.command -run -project_location "Projects/ING-Public-Web" -release "Release1" -testset "Set1"
+  displayName: 'Run tests'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'NUnit'
+    testResultsFiles: 'azure.xml'
+    searchFolder: '$(System.DefaultWorkingDirectory)/Projects/ING-Public-Web/Results/TestExecution/Release1/Set1/Latest'
+    testRunTitle: 'Test Results'
